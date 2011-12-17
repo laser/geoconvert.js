@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+    <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen"/>
+    <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
+    <script type="text/javascript" src="geoconvert.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+            test("a basic test example", function() {
+                var lat,
+                    lon,
+                    zone,
+                    utm,
+                    latLng;
+
+                lat = 15;
+                lon = 15;
+
+                module("Going from lat/lon to UTM using WGS84 datum");
+
+                utm = new UTM(lat, lon);
+
+                equal(utm.northing, 1658325.9934411813);
+                equal(utm.easting, 500000);
+                equal(utm.lngZone, 33);
+                equal(utm.hemisphere, "N");
+
+                module("Going from UTM using WGS84 datum to lat/lon");
+
+                latLng = new LL(utm.easting, utm.northing, utm.lngZone, utm.hemisphere);
+
+                equal(latLng.longitude.toFixed(8), lat);
+                equal(latLng.latitude.toFixed(8), lon);
+            });
+
+        });
+    </script>
+</head>
+<body>
+    <h1 id="qunit-header">QUnit example</h1>
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+    <div id="qunit-fixture">test markup, will be hidden</div>
+</body>
+</html>

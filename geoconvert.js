@@ -15,6 +15,8 @@ var Geomath = (function() {
     ELLIPSOID_MODEL_MINOR_AXIS = 6356752.314;
     ELLIPSOID_ECCENTRICITY_SQUARED = 6.69437999013e-03;
 
+    self = {};
+
     self.degToRad = function(deg) {
         return (deg / 180.0 * PI)
     };
@@ -23,7 +25,7 @@ var Geomath = (function() {
         return (rad / PI * 180.0)
     };
 
-    self.latLonToUTMXY = function(lat, lon, zone, xy) {
+    self.latLonToUTMXY = function(lat, lon, zone) {
 
         /*
          * LatLonToUTMXY
@@ -46,14 +48,16 @@ var Geomath = (function() {
          *
          */
 
-        mapLatLonToXY(lat, lon, utmCentralMeridian(zone), xy);
+        var xy;
+
+        xy = mapLatLonToXY(lat, lon, utmCentralMeridian(zone));
 
         /* Adjust easting and northing for UTM system. */
         xy[0] = xy[0] * UTM_SCALE_FACTOR + 500000.0;
         xy[1] = xy[1] * UTM_SCALE_FACTOR;
         if (xy[1] < 0.0) xy[1] = xy[1] + 10000000.0;
 
-        return zone;
+        return xy;
     };
 
     self.utmXYToLatLon = function(x, y, zone, southhemi, latlon) {
@@ -228,7 +232,7 @@ var Geomath = (function() {
         return result;
     }
 
-    function mapLatLonToXY(phi, lambda, lambda0, xy) {
+    function mapLatLonToXY(phi, lambda, lambda0) {
 
         /*
          * MapLatLonToXY
@@ -266,7 +270,10 @@ var Geomath = (function() {
             l6coef,
             l7coef,
             l8coef,
-            tmp;
+            tmp,
+            xy;
+
+        xy = new Array(2);
 
         /* Precalculate ep2 */
         ep2 = (Math.pow(ELLIPSOID_MODEL_MAJOR_AXIS, 2.0) - Math.pow(ELLIPSOID_MODEL_MINOR_AXIS, 2.0)) / Math.pow(ELLIPSOID_MODEL_MINOR_AXIS, 2.0);
@@ -306,6 +313,8 @@ var Geomath = (function() {
 
         /* Calculate northing (y) */
         xy[1] = arcLengthOfMeridian(phi) + (t / 2.0 * N * Math.pow(Math.cos(phi), 2.0) * Math.pow(l, 2.0)) + (t / 24.0 * N * Math.pow(Math.cos(phi), 4.0) * l4coef * Math.pow(l, 4.0)) + (t / 720.0 * N * Math.pow(Math.cos(phi), 6.0) * l6coef * Math.pow(l, 6.0)) + (t / 40320.0 * N * Math.pow(Math.cos(phi), 8.0) * l8coef * Math.pow(l, 8.0));
+
+        return xy;
     }
 
     function mapXYToLatLon(x, y, lambda0, philambda) {
@@ -440,15 +449,15 @@ var Geomath = (function() {
 })();
 
 function UTM(latitude, longitude) {
-    var xy,
-        zone;
+    var zone,
+        xy;
 
     longitude = parseFloat(longitude);
     latitude  = parseFloat(latitude);
-    xy        = new Array(2);
     zone      = Math.floor((longitude + 180.0) / 6) + 1;
+    xy        = Geomath.latLonToUTMXY(Geomath.degToRad(latitude), Geomath.degToRad(longitude), zone);
 
-    this.lngZone = Geomath.latLonToUTMXY(Geomath.degToRad(latitude), Geomath.degToRad(longitude), zone, xy);
+    this.lngZone = zone;
     this.easting = xy[0];
     this.northing = xy[1];
     this.hemisphere = latitude < 0 ? "S" : "N";
