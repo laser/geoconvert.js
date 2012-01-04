@@ -460,6 +460,14 @@ function LL(easting, northing, zone, hemisphere) {
 
 var Geoconvert = {
     convertDMStoDD: function(dir, deg, min, sec) {
+
+        if (((dir === "N") || (dir === "S")) && Math.abs(deg) > 90) {
+            throw "Latitude out of range (-90 to 90)";
+        }
+        else if (Math.abs(deg) > 180) {
+            throw "Longitude out of range (-180 to 180)";
+        }
+
         if (dir === "S" || dir === "W") {
             deg = -deg;
             min = -min;
