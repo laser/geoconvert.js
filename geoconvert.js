@@ -1,5 +1,5 @@
 var Geomath = (function() {
-    var self,
+    var iface,
         PI,
         ELLIPSOID_MODEL_MAJOR_AXIS,
         ELLIPSOID_MODEL_MINOR_AXIS,
@@ -15,17 +15,17 @@ var Geomath = (function() {
     ELLIPSOID_MODEL_MINOR_AXIS = 6356752.314;
     ELLIPSOID_ECCENTRICITY_SQUARED = 6.69437999013e-03;
 
-    self = {};
+    iface = {};
 
-    self.degToRad = function(deg) {
+    iface.degToRad = function(deg) {
         return (deg / 180.0 * PI)
     };
 
-    self.radToDeg = function(rad) {
+    iface.radToDeg = function(rad) {
         return (rad / PI * 180.0)
     };
 
-    self.latLonToUTMXY = function(lat, lon, zone) {
+    iface.latLonToUTMXY = function(lat, lon, zone) {
 
         /*
          * LatLonToUTMXY
@@ -40,11 +40,8 @@ var Geomath = (function() {
          *          If zone is less than 1 or greater than 60, the routine
          *          will determine the appropriate zone from the value of lon.
          *
-         * Outputs:
-         *   xy - A 2-element array where the UTM x and y values will be stored.
-         *
          * Returns:
-         *   The UTM zone used for calculating the values of x and y.
+         *   A 2-element array where the UTM x and y values will be stored.
          *
          */
 
@@ -60,7 +57,7 @@ var Geomath = (function() {
         return xy;
     };
 
-    self.utmXYToLatLon = function(x, y, zone, southhemi, latlon) {
+    iface.utmXYToLatLon = function(x, y, zone, southhemi) {
 
         /*
          * UTMXYToLatLon
@@ -75,12 +72,9 @@ var Geomath = (function() {
          *	southhemi - True if the point is in the southern hemisphere;
          *               false otherwise.
          *
-         * Outputs:
-         *	latlon - A 2-element array containing the latitude and
-         *            longitude of the point, in radians.
-         *
          * Returns:
-         *	The function does not return a value.
+         *	A 2-element array containing the latitude and
+         *            longitude of the point, in radians.
          *
          */
 
@@ -95,7 +89,8 @@ var Geomath = (function() {
         y /= UTM_SCALE_FACTOR;
 
         cmeridian = utmCentralMeridian(zone);
-        mapXYToLatLon(x, y, cmeridian, latlon);
+
+        return mapXYToLatLon(x, y, cmeridian);
     };
 
     function arcLengthOfMeridian(phi) {
@@ -111,10 +106,6 @@ var Geomath = (function() {
          * Inputs:
          *     phi - Latitude of the point, in radians.
          *
-         * Globals:
-         *     sm_a - Ellipsoid model major axis.
-         *     sm_b - Ellipsoid model minor axis.
-         *
          * Returns:
          *     The ellipsoidal distance of the point from the equator, in meters.
          *
@@ -126,7 +117,7 @@ var Geomath = (function() {
             delta,
             epsilon,
             n,
-            result;
+            ellipsoidalDistance;
 
         /* Precalculate n */
         n = (ELLIPSOID_MODEL_MAJOR_AXIS - ELLIPSOID_MODEL_MINOR_AXIS) / (ELLIPSOID_MODEL_MAJOR_AXIS + ELLIPSOID_MODEL_MINOR_AXIS);
@@ -147,9 +138,9 @@ var Geomath = (function() {
         epsilon = (315.0 * Math.pow(n, 4.0) / 512.0);
 
         /* Now calculate the sum of the series and return */
-        result = alpha * (phi + (beta * Math.sin(2.0 * phi)) + (gamma * Math.sin(4.0 * phi)) + (delta * Math.sin(6.0 * phi)) + (epsilon * Math.sin(8.0 * phi)));
+        ellipsoidalDistance = alpha * (phi + (beta * Math.sin(2.0 * phi)) + (gamma * Math.sin(4.0 * phi)) + (delta * Math.sin(6.0 * phi)) + (epsilon * Math.sin(8.0 * phi)));
 
-        return result;
+        return ellipsoidalDistance;
     }
 
     function utmCentralMeridian(zone) {
@@ -169,11 +160,7 @@ var Geomath = (function() {
          *
          */
 
-        var cmeridian;
-
-        cmeridian = self.degToRad(-183.0 + (zone * 6.0));
-
-        return cmeridian;
+        return iface.degToRad(-183.0 + (zone * 6.0));
     }
 
     function footpointLatitude(y) {
@@ -202,7 +189,7 @@ var Geomath = (function() {
             delta_,
             epsilon_,
             n,
-            result;
+            footpointLatitude;
 
         /* Precalculate n (Eq. 10.18) */
         n = (ELLIPSOID_MODEL_MAJOR_AXIS - ELLIPSOID_MODEL_MINOR_AXIS) / (ELLIPSOID_MODEL_MAJOR_AXIS + ELLIPSOID_MODEL_MINOR_AXIS);
@@ -227,9 +214,9 @@ var Geomath = (function() {
         epsilon_ = (1097.0 * Math.pow(n, 4.0) / 512.0);
 
         /* Now calculate the sum of the series (Eq. 10.21) */
-        result = y_ + (beta_ * Math.sin(2.0 * y_)) + (gamma_ * Math.sin(4.0 * y_)) + (delta_ * Math.sin(6.0 * y_)) + (epsilon_ * Math.sin(8.0 * y_));
+        footpointLatitude = y_ + (beta_ * Math.sin(2.0 * y_)) + (gamma_ * Math.sin(4.0 * y_)) + (delta_ * Math.sin(6.0 * y_)) + (epsilon_ * Math.sin(8.0 * y_));
 
-        return result;
+        return footpointLatitude;
     }
 
     function mapLatLonToXY(phi, lambda, lambda0) {
@@ -249,12 +236,9 @@ var Geomath = (function() {
          *    lambda - Longitude of the point, in radians.
          *    lambda0 - Longitude of the central meridian to be used, in radians.
          *
-         * Outputs:
+         * Returns:
          *    xy - A 2-element array containing the x and y coordinates
          *         of the computed point.
-         *
-         * Returns:
-         *    The function does not return a value.
          *
          */
 
@@ -317,7 +301,7 @@ var Geomath = (function() {
         return xy;
     }
 
-    function mapXYToLatLon(x, y, lambda0, philambda) {
+    function mapXYToLatLon(x, y, lambda0) {
 
         /*
          * MapXYToLatLon
@@ -334,12 +318,9 @@ var Geomath = (function() {
          *   y - The northing of the point, in meters.
          *   lambda0 - Longitude of the central meridian to be used, in radians.
          *
-         * Outputs:
+         * Returns:
          *   philambda - A 2-element containing the latitude and longitude
          *               in radians.
-         *
-         * Returns:
-         *   The function does not return a value.
          *
          * Remarks:
          *   The local variables Nf, nuf2, tf, and tf2 serve the same purpose as
@@ -374,7 +355,10 @@ var Geomath = (function() {
             x5poly,
             x6poly,
             x7poly,
-            x8poly;
+            x8poly,
+            philambda;
+
+        philambda = [];
 
         /* Get the value of phif, the footpoint latitude. */
         phif = footpointLatitude(y);
@@ -443,9 +427,11 @@ var Geomath = (function() {
 
         /* Calculate longitude */
         philambda[1] = lambda0 + x1frac * x + x3frac * x3poly * Math.pow(x, 3.0) + x5frac * x5poly * Math.pow(x, 5.0) + x7frac * x7poly * Math.pow(x, 7.0);
+
+        return philambda;
     }
 
-    return self;
+    return iface;
 })();
 
 function UTM(latitude, longitude) {
@@ -466,9 +452,7 @@ function UTM(latitude, longitude) {
 function LL(easting, northing, zone, hemisphere) {
     var latlon;
 
-    latlon = new Array(2);
-
-    Geomath.utmXYToLatLon(parseFloat(easting), parseFloat(northing), parseFloat(zone), (hemisphere === "S"), latlon);
+    latlon = Geomath.utmXYToLatLon(parseFloat(easting), parseFloat(northing), parseFloat(zone), (hemisphere === "S"));
 
     this.longitude = Geomath.radToDeg(latlon[1]);
     this.latitude  = Geomath.radToDeg(latlon[0]);
