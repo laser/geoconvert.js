@@ -1,6 +1,6 @@
 geoconvert.js helps a JavaScript programmer transform degree decimal-formatted latitude/longitude positions to degree/minute/second-formatted positions, from degree-decimal to UTM, and from UTM to degree-decimal.
 
-# Test code (which explains this better than words can)
+# Test code
 
 <code>
     <pre>
